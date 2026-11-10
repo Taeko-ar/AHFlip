@@ -1,0 +1,140 @@
+/* Notion-like, calm. Dark by default; html[data-theme="light"] switches (toggle at the bottom of the sidebar). */
+:root{--bg:#191919;--side:#202020;--hover:#252525;--sel:#2c2c2c;--line:#2f2f2f;--line2:#262626;
+--text:#e6e5e3;--dim:#b4b3b0;--muted:#9b9b98;--faint:#6e6e6c;--good:#6fcf8f;--bad:#e0735a;
+--pill:#2f2f2f;--pill-t:#c9c8c5;--pill-g:#1f3a2a;--pill-g-t:#8fd4a4;--pill-g2:#233428;--pill-g2-t:#7fc794;
+--pill-r:#3d2420;--pill-r-t:#f09a85;--pill-b:#1e2f45;--pill-b-t:#8ab4f0;
+--gold:#e8c35a;--silver:#b8bec7;--copper:#d58a5c;color-scheme:dark}
+:root[data-theme="light"]{--bg:#ffffff;--side:#f7f7f5;--hover:#f1f1ef;--sel:#ebebe9;--line:#ececea;--line2:#f1f1ef;
+--text:#37352f;--dim:#5f5e5a;--muted:#6f6e69;--faint:#9b9a97;--good:#1c6b3a;--bad:#b3362c;
+--pill:#ececea;--pill-t:#4a4945;--pill-g:#dbeddb;--pill-g-t:#1c5b33;--pill-g2:#e9f3e6;--pill-g2-t:#2c6a3f;
+--pill-r:#fbe4e0;--pill-r-t:#8f2a1c;--pill-b:#e3ecf8;--pill-b-t:#1f4f8f;
+--gold:#9a6f00;--silver:#5d6570;--copper:#9a4f22;color-scheme:light}
+
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--line) transparent} /* thin, dark scrollbars where one is needed */
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Geist,system-ui,sans-serif}
+/* numbers in Geist Mono so digits line up */
+.money,td.num,.stat b,.props dd,.trades div{font-family:'Geist Mono',ui-monospace,Consolas,monospace}
+a{color:var(--text);text-decoration:none}a:hover{text-decoration:underline}
+button,input,select{font:inherit;color:inherit}
+.app{display:flex;flex-wrap:wrap;min-height:100vh}
+
+/* sidebar */
+.side{flex:1 1 200px;max-width:232px;background:var(--side);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:18px;
+position:sticky;top:0;height:100vh;overflow-y:auto} /* stays in view on long pages, so the status is always visible */
+.brand{display:flex;align-items:center;gap:8px;padding:4px 8px;font-weight:600}.brand:hover{text-decoration:none}
+#nav{display:flex;flex-direction:column;gap:1px}
+#nav a{padding:5px 8px;border-radius:5px;color:var(--dim)}#nav a:hover{background:var(--hover);text-decoration:none}
+#nav a.on{background:var(--sel);color:var(--text);font-weight:500}
+.side-foot{margin-top:auto;padding:8px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.side-foot .err{color:var(--bad)}
+.seg.ah{display:flex;margin-bottom:10px;padding:2px;border:1px solid var(--line);border-radius:6px}
+.seg.ah button{flex:1;padding:3px 0;font-size:12px}
+.link{background:none;border:0;padding:0;color:var(--text);cursor:pointer;text-align:left;font-size:12px;font-weight:500}
+.link:hover{text-decoration:underline}.link:disabled{color:var(--muted);cursor:default;text-decoration:none}
+
+/* content */
+#main{flex:999 1 560px;min-width:0;display:flex;flex-wrap:wrap;position:relative;height:100vh;overflow-y:auto}
+/* app shell: the window never scrolls. .page.fill pages (Market, Watchlist, Ledger) scroll only their table
+   (.grow), with a sticky header row; other pages scroll inside #main */
+.app{height:100vh;overflow:hidden}
+.page.fill{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.page.fill > *,.col > *{flex:none}
+.col,.page.fill > .col{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.page.fill .grow{flex:1 1 auto;min-height:0;overflow:auto}
+.grow thead th{position:sticky;top:0;z-index:1;background:var(--bg)}
+.grow .wrap{overflow:visible} /* .grow scrolls both ways; an inner scroller would break the sticky header */
+#main > .panel{height:100%;overflow-y:auto}
+/* loading: page dims, a bar sweeps along the top, label below it (set by main.js setBusy) */
+#main > *{transition:opacity .2s}
+#main.busy > *{opacity:.3;pointer-events:none}
+#main.busy::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;z-index:3;
+background:linear-gradient(90deg,transparent 0,var(--text) 50%,transparent 100%) 0 0/40% 100% no-repeat;animation:sweep 1.1s ease-in-out infinite}
+#main.busy::after{content:attr(data-loading);position:absolute;top:28px;left:50%;transform:translateX(-50%);z-index:3;
+padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--side);font-size:13px;color:var(--dim);white-space:nowrap}
+@keyframes sweep{from{background-position:-40% 0}to{background-position:140% 0}}
+@media (prefers-reduced-motion:reduce){#main.busy::before{animation:none;background:var(--text);opacity:.5}#main > *{transition:none}}
+.page{flex:999 1 560px;min-width:0;padding:28px 40px 32px;max-width:1180px}
+h1{margin:0;font:600 30px/1.2 Geist,system-ui,sans-serif;letter-spacing:-.02em}
+h2{margin:28px 0 8px;font-size:15px;font-weight:600}
+.sub{margin:6px 0 0;color:var(--muted)}
+.muted{color:var(--muted)}.small{font-size:12px}.good{color:var(--good)}.bad{color:var(--bad)}
+
+/* tabs and controls */
+.tabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:24px;border-bottom:1px solid var(--line)}
+.tabs .tab{border:0;border-bottom:2px solid transparent;background:none;padding:6px 10px;font-size:13px;color:var(--muted);cursor:pointer}
+.tabs .tab.on{border-bottom-color:var(--text);color:var(--text);font-weight:500}
+.tabs .tab:hover{color:var(--text)}
+.tabs .end{margin-left:auto;padding-bottom:4px;display:flex;gap:6px;align-items:center}
+.seg{display:inline-flex;gap:2px}
+.seg button{border:0;background:none;padding:4px 10px;border-radius:5px;font-size:13px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--sel);color:var(--text);font-weight:500}.seg button:hover{color:var(--text)}
+.bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:20px}
+input,select{padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:13px}
+input:focus,select:focus{outline:1px solid var(--muted);outline-offset:0}
+.btn{border:1px solid var(--line);background:var(--bg);padding:6px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--hover)}.btn.sm{padding:2px 8px;font-size:12px}
+.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+/* tables */
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line2);text-align:left;white-space:nowrap}
+th{font-size:12px;font-weight:500;color:var(--muted);border-bottom-color:var(--line);cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover{background:var(--hover)}
+tr.click{cursor:pointer}tr.sel{background:var(--sel)!important}
+.pill{font-size:12px;font-weight:500;padding:2px 8px;border-radius:4px;background:var(--pill);color:var(--pill-t);font-variant-numeric:tabular-nums}
+.pill.g{background:var(--pill-g);color:var(--pill-g-t)}.pill.g2{background:var(--pill-g2);color:var(--pill-g2-t)}
+.pill.r{background:var(--pill-r);color:var(--pill-r-t)}.pill.b{background:var(--pill-b);color:var(--pill-b-t)}
+.star{border:0;background:none;cursor:pointer;font-size:15px;color:var(--faint);padding:0 4px}.star.on{color:var(--gold)}
+.g{color:var(--gold)}.s{color:var(--silver)}.c{color:var(--copper)}
+.good .g,.good .s,.good .c,.bad .g,.bad .s,.bad .c{color:inherit}
+
+/* item panel (Market) */
+.panel{flex:1 1 340px;max-width:420px;border-left:1px solid var(--line);padding:44px 28px 28px;display:flex;flex-direction:column;gap:18px}
+.panel h2{margin:2px 0 0;font:600 24px/1.25 Geist,system-ui,sans-serif;letter-spacing:-.01em}
+.panel .x{float:right;border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1}
+.props{margin:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);row-gap:8px}
+.props dt{color:var(--muted)}.props dd{margin:0;font-variant-numeric:tabular-nums}
+.trades{display:flex;flex-direction:column;font-size:13px}
+.trades div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
+
+/* stats line (Ledger) */
+.stats{display:flex;flex-wrap:wrap;gap:12px 36px;margin-top:24px}
+.stat span{display:block;font-size:12px;color:var(--muted)}
+.stat b{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px;margin-top:28px}
+.charts h3{margin:0 0 6px;font-size:12px;font-weight:500;color:var(--muted)}
+.edit{display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding:12px;margin-top:12px;border:1px solid var(--line);border-radius:6px}
+.edit label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+
+/* settings: groups of rows, label + help left, control right */
+/* two columns of groups (one on narrow screens); Game files spans both */
+.page.settings{max-width:none}
+.set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px 40px;margin-top:16px;align-items:start}
+.set-group.full{grid-column:1/-1}
+.set-group h2{margin:0;font-size:15px}.set-group > p{margin:0 0 4px}
+.set-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 16px;padding:5px 0;border-top:1px solid var(--line2)}
+.set-row label{font-weight:500}
+.set-row .help{font-size:12px;color:var(--muted);max-width:480px}
+.set-row .ctl{display:flex;align-items:center;gap:8px;font-size:13px}
+.set-row.stack{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);align-items:center}
+.set-row input{font-size:13px;padding:4px 8px}
+.set-row input.short{width:96px;text-align:right;font-variant-numeric:tabular-nums}
+.set-row input.wide{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.files{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid var(--line2);font-size:13px}
+.file{display:flex;align-items:center;gap:8px;min-width:0}.file .muted{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.code{font:12px/1.5 'Geist Mono',ui-monospace,Consolas,monospace;background:var(--side);border:1px solid var(--line);border-radius:6px;padding:8px 10px;white-space:pre-wrap;word-break:break-all;margin:4px 0 8px}
+code{font:12px 'Geist Mono',ui-monospace,Consolas,monospace}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}.dot.ok{background:var(--good)}.dot.no{background:var(--bad)}
+.savebar{position:sticky;bottom:16px;margin-top:20px;display:flex;align-items:center;gap:10px;padding:10px 14px;
+background:var(--side);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.savebar span{margin-right:auto;font-size:13px}.savebar[hidden]{display:none}
+
+svg.chart{width:100%;height:auto;display:block}
+svg .lbl{fill:var(--muted);font-size:11px}
+#toast{position:fixed;bottom:16px;right:16px;background:var(--bad);color:#fff;padding:8px 14px;border-radius:6px;display:none;z-index:5}
+#toast.ok{background:var(--good);color:#111}
+@media (max-width:700px){.page{padding:24px 16px}.side{max-width:none;position:static;height:auto}h1{font-size:30px}
+.app,#main,.page.fill,#main > .panel,.page.fill .grow{height:auto;overflow:visible}}

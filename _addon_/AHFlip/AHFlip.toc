@@ -1,0 +1,22 @@
+## Interface: 120100, 120105, 16001, 50504, 38000, 20506, 11508, 11509
+## Title: AHFlip
+## Notes: One-click full auction house scan and trade ledger for ah.py. /ahflip settings for options.
+## Version: 1
+## X-Category: Auction/Economy
+## Category-enUS: Auctions
+## Category-deDE: Auktionen
+## Category-esES: Subastas
+## Category-esMX: Subastas
+## Category-frFR: Ventes
+## Category-itIT: Aste
+## Category-koKR: 경매
+## Category-ptBR: Leilões
+## Category-ruRU: Лоты
+## Category-zhCN: 拍卖
+## Category-zhTW: 拍賣
+## IconTexture: Interface\Icons\INV_Misc_Coin_02
+## SavedVariables: AHFlipDB
+
+Options.lua
+AHFlip.lua
+Ledger.lua

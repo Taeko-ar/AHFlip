@@ -1,0 +1,32 @@
+# secrets: Battle.net API credentials
+.env
+*.env
+
+# local data: price history, settings, trade ledger, downloaded game tables
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.md
+!README.md
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# js tooling
+node_modules
+coverage/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["ahflip/web/static/js/main.js", "ahflip/web/static/js/pages/*.js"],
+  "project": ["ahflip/web/static/js/**/*.js"]
+}

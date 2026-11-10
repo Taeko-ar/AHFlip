@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ahflip</title>
+<script>try { if (localStorage.getItem('theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/style.css">
+</head><body>
+<div class="app">
+  <aside class="side">
+    <a class="brand" href="/market"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 9.5c0-1.2 1.3-2 3-2s3 .8 3 2-1.3 1.8-3 2.2-3 1-3 2.3 1.3 2 3 2 3-.8 3-2M12 5.5v13"/></svg>ahflip</a>
+    <nav id="nav" aria-label="Pages"></nav>
+    <div class="side-foot">
+      <div class="seg ah" id="ahSel" role="group" aria-label="Auction house"></div>
+      <div id="status">…</div>
+      <button class="link" id="snapBtn">Refresh API now</button>
+      <button class="link" id="themeBtn"></button>
+    </div>
+  </aside>
+  <div id="main"></div>
+</div>
+<div id="toast"></div>
+<script type="module" src="/static/js/main.js"></script>
+</body></html>
