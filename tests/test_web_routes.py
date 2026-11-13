@@ -31,7 +31,7 @@ class Routes(unittest.TestCase):
         r = routes.status(self.c, {})
         self.assertIsNone(r["latest"])
         self.assertEqual(r["next"], 600)  # no attempt yet: 0 + 10 min
-        self.assertEqual(r["houses"], {"horde": 113, "alliance": 110, "goblin": 116})
+        self.assertEqual(r["houses"], {"horde": 113, "goblin": 116})
         self.assertEqual((r["api"], r["setup_done"]), (True, True))
         self.seed()
         db.save_settings(self.c, {"snap_minutes": 0})
@@ -90,10 +90,10 @@ class Routes(unittest.TestCase):
 
     def test_setup(self):
         self.assertTrue(routes.setup_get(self.c, {})["api"])
-        r = routes.setup_set(self.c, {"rs": "3", "faction": "alliance"})
-        self.assertEqual((r["done"], r["rs"], r["faction"]), (True, 3, "alliance"))
+        r = routes.setup_set(self.c, {"rs": "3"})
+        self.assertEqual((r["done"], r["rs"]), (True, 3))
         with self.assertRaises(KeyError):
-            routes.setup_set(self.c, {"rs": 1})
+            routes.setup_set(self.c, {})
 
     def test_routes_table(self):
         self.assertIs(routes.ROUTES[("GET", "/api/status")], routes.status)

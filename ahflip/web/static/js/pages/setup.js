@@ -1,22 +1,14 @@
-// /setup: first run (main.js sends new installs here). Faction and ruleset, pre-filled from the AHFlip saved
+// /setup: first run (main.js sends new installs here). Ruleset, pre-filled from the AHFlip saved
 // file; where the addon goes; whether Blizzard API keys are set up. Everything can be changed later in Settings.
 import {h, api, toast, go, muted} from '../core.js';
 
-const SIDES = [['horde', 'Horde'], ['alliance', 'Alliance']];
-
 export async function render(main) {
   const d = await api('/api/setup');
-  let faction = d.detected.faction || d.faction;
   const rs = h('select', {id: 'setup-rs'}, Object.entries(d.rulesets).map(([id, name]) =>
     h('option', {value: id, selected: Number(id) === (d.detected.rs ?? d.rs)}, name)));
-  const sides = h('div', {class: 'seg', role: 'group', 'aria-label': 'Faction'});
-  const drawSides = () => sides.replaceChildren(...SIDES.map(([k, name]) =>
-    h('button', {type: 'button', class: k === faction ? 'on' : '', 'aria-pressed': String(k === faction),
-      onclick: () => { faction = k; drawSides(); }}, name)));
-  drawSides();
 
   async function save() {
-    try { await api('/api/setup', {rs: Number(rs.value), faction}); go('/market'); } catch (e) { toast(e.message); }
+    try { await api('/api/setup', {rs: Number(rs.value)}); go('/market'); } catch (e) { toast(e.message); }
   }
 
   const file = ([name, f]) => h('div', {class: 'file'},
@@ -27,11 +19,9 @@ export async function render(main) {
     h('p', {class: 'sub'}, 'Three steps. You can change all of it later in Settings.'),
     h('div', {class: 'set-grid'},
       h('section', {class: 'set-group'},
-        h('h2', {}, '1. Your character'),
-        h('p', {class: 'muted small'}, 'Picks the auction house the site shows first.'),
-        h('div', {class: 'set-row'}, h('div', {}, h('span', {}, 'Faction')), h('div', {class: 'ctl'}, sides)),
+        h('h2', {}, '1. Your realm'),
         h('div', {class: 'set-row'}, h('div', {}, h('label', {for: 'setup-rs'}, 'Ruleset')), h('div', {class: 'ctl'}, rs)),
-        d.detected.faction || d.detected.rs ? h('p', {class: 'muted small'}, 'Filled in from your last AHFlip scan.') : null),
+        d.detected.rs ? h('p', {class: 'muted small'}, 'Filled in from your last AHFlip scan.') : null),
       h('section', {class: 'set-group'},
         h('h2', {}, '2. The AHFlip addon'),
         h('p', {class: 'muted small'}, d.wow ? `Found WoW Forever in ${d.wow}.` :

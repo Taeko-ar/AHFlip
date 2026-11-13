@@ -87,5 +87,10 @@ export function star(id, on) {
   return b;
 }
 
+// Copies the item name (to paste in the in-game AH search). Nothing for items without a name.
+export const copyName = name => name ? h('button', {class: 'star', title: 'Copy name', 'aria-label': 'Copy name', onclick: async () => {
+  try { await navigator.clipboard.writeText(name); toast(`Copied "${name}"`, true); } catch (e) { toast(e.message); }
+}}, '⧉') : null;
+
 export const pct = (a, b) => a == null || !b ? muted('–') :
   h('span', {class: a < b ? 'good' : a > b ? 'bad' : ''}, ((a / b - 1) * 100).toFixed(0) + '%');

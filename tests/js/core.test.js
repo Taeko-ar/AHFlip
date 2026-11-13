@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {ago, api, go, gold, goldText, h, label, link, pct, signed, star, table, toast, when} from '../../ahflip/web/static/js/core.js';
+import {ago, api, copyName, go, gold, goldText, h, label, link, pct, signed, star, table, toast, when} from '../../ahflip/web/static/js/core.js';
 import {fakeApi, flush, pageShell, posted, toastText} from './helpers.js';
 import {lineChart, barChart} from '../../ahflip/web/static/js/charts.js';
 
@@ -180,6 +180,22 @@ describe('table extras', () => {
     const tr = el.querySelector('tbody tr');
     expect(tr.hasAttribute('class')).toBe(false); // no onRow, nothing selected: no class at all
     expect(tr.children[2].textContent).toBe('');
+  });
+});
+
+describe('copyName', () => {
+  beforeEach(() => pageShell());
+  afterEach(() => vi.unstubAllGlobals());
+  it('copies the name, shows errors, and is absent without a name', async () => {
+    const writeText = vi.fn(async () => {});
+    vi.stubGlobal('navigator', {clipboard: {writeText}});
+    copyName('Linen Cloth').click(); await flush();
+    expect(writeText).toHaveBeenCalledWith('Linen Cloth');
+    expect(toastText()).toBe('Copied "Linen Cloth"');
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    copyName('Silk').click(); await flush();
+    expect(toastText()).toBe('denied');
+    expect(copyName(null)).toBeNull();
   });
 });
 

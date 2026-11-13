@@ -51,7 +51,7 @@ def load_deals(c, s, hist=None):
     cur = prices.current(c, house, ts)
     names, sell = items.info(c)
     if hist is None:
-        hist = prices.past(c, house, ts, s["hist_days"], prices.source(c, house, ts))
+        hist = prices.past(c, house, ts, s["hist_days"])
     cut = house_cut(s)
     found = find_deals(cur, hist, sell, cut, s["flip_discount"], s["min_snaps"])
     levels = prices.depth(c, house, ts)

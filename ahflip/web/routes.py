@@ -36,7 +36,7 @@ def status(c, _):
 
 def market(c, a):
     s = db.settings(c)
-    m = load_market(c, s, a.get("view", "below"), a.get("q", ""))
+    m = load_market(c, s, a.get("view", "below"), a.get("q", ""), a.get("cat", ""))
     return dict(m, watch=sorted(items.watched(c)), cut=db.house_cut(s))
 
 
@@ -115,7 +115,7 @@ def setup_get(c, _):
 
 
 def setup_set(c, b):
-    return setup.save(c, b["rs"], b["faction"])
+    return setup.save(c, b["rs"])
 
 
 ROUTES = {

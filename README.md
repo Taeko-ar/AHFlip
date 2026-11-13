@@ -17,7 +17,7 @@ Python 3.11+, standard library only: nothing to install besides Python.
    ```
    python ah.py web
    ```
-5. Open http://localhost:8000. The first page asks your faction and ruleset and shows whether your WoW folder was found.
+5. Open http://localhost:8000. The first page asks your ruleset and shows whether your WoW folder was found.
 6. In game, open the auction house, click **AHFlip scan** above its window, wait for "Reload to save" and click it. The website shows the prices within a few seconds.
 
 From WSL or Linux use `python3` instead of `python`; the WoW folder is found on any Windows drive.

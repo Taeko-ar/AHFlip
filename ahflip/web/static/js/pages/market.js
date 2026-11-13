@@ -1,6 +1,6 @@
 // /market (home): items vs their usual price, in views; click a row to open the item on the right.
-// URL: /market?view=below|vendor|rising|all&q=text&item=id
-import {h, api, gold, goldText, signed, label, when, SRC, table, star, muted, toast} from '../core.js';
+// URL: /market?view=below|vendor|rising|all&q=text&cat=Class[/Subclass]&item=id
+import {h, api, gold, goldText, signed, label, when, SRC, table, star, muted, toast, copyName} from '../core.js';
 import {lineChart} from '../charts.js';
 
 const VIEWS = {below: 'Below usual price', vendor: 'Below vendor', rising: 'Rising', all: 'All items'};
@@ -26,25 +26,40 @@ function spark(vals) {
 export async function render(main, params) {
   const view = VIEWS[params.get('view')] ? params.get('view') : 'below';
   const q = params.get('q') || '';
-  const d = await api(`/api/market?view=${view}&q=${encodeURIComponent(q)}`);
+  const cat = params.get('cat') || '';
+  const d = await api(`/api/market?view=${view}&q=${encodeURIComponent(q)}&cat=${encodeURIComponent(cat)}`);
   const watch = new Set(d.watch);
   let selected = Number(params.get('item')) || null;
 
-  const setUrl = () => {
-    const p = new URLSearchParams({view});
+  const query = v => {
+    const p = new URLSearchParams({view: v});
     if (search.value.trim()) p.set('q', search.value.trim());
+    if (catSel.value) p.set('cat', catSel.value);
+    return p;
+  };
+  const setUrl = () => {
+    const p = query(view);
     if (selected) p.set('item', selected);
     history.replaceState(null, '', '/market?' + p);
   };
-  const go = (v) => { history.pushState(null, '', `/market?view=${v}` + (search.value.trim() ? '&q=' + encodeURIComponent(search.value.trim()) : '')); dispatchEvent(new Event('ahflip:route')); };
+  const go = (v) => { history.pushState(null, '', '/market?' + query(v)); dispatchEvent(new Event('ahflip:route')); };
+  const reload = () => { setUrl(); dispatchEvent(new Event('ahflip:route')); };
 
   const search = h('input', {placeholder: 'Search…', value: q, 'aria-label': 'Search items', size: 18});
   let t;
-  search.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { setUrl(); dispatchEvent(new Event('ahflip:route')); }, 300); });
+  search.addEventListener('input', () => { clearTimeout(t); t = setTimeout(reload, 300); });
 
+  // Category filter: classes, each followed by its subclasses (indented). d.cats: [[class, subclass], ...] sorted.
+  const subs = new Map();
+  for (const [k, s] of d.cats) subs.set(k, [...(subs.get(k) || []), s].filter(Boolean));
+  const catSel = h('select', {'aria-label': 'Category', onchange: reload}, h('option', {value: ''}, 'All categories'),
+    [...subs].flatMap(([k, list]) => [h('option', {value: k}, k), ...list.map(s => h('option', {value: `${k}/${s}`}, '  ' + s))]));
+  catSel.value = cat;
+
+  const nameCol = {k: 'name', label: 'Item', fmt: (_, r) => [copyName(r.name), h('b', {style: 'font-weight:500'}, label(r))]};
   const starCol = {k: 'watched', label: '★', tip: 'Watchlist', fmt: (_, r) => star(r.item, watch.has(r.item))};
   const cols = view === 'vendor' ? [
-    {k: 'name', label: 'Item', fmt: (_, r) => h('b', {style: 'font-weight:500'}, label(r))},
+    nameCol,
     {k: 'now', label: 'Now', num: 1, fmt: gold},
     {k: 'sell', label: 'Vendor', num: 1, fmt: gold},
     {k: 'gain', label: 'Profit / unit', num: 1, fmt: v => h('span', {class: 'good'}, gold(v))},
@@ -52,9 +67,9 @@ export async function render(main, params) {
     {k: 'total', label: 'Total', num: 1, fmt: v => v == null ? muted('–') : h('span', {class: 'good'}, gold(v))},
     starCol,
   ] : [
-    {k: 'name', label: 'Item', fmt: (_, r) => h('b', {style: 'font-weight:500'}, label(r))},
+    nameCol,
     {k: 'now', label: 'Now', num: 1, fmt: gold},
-    {k: 'usual', label: 'Usual', num: 1, fmt: v => h('span', {class: 'muted'}, gold(v)), tip: `Median of the last days' scans from the same source`},
+    {k: 'usual', label: 'Usual', num: 1, fmt: v => h('span', {class: 'muted'}, gold(v)), tip: `Median of the last days' scans and API snapshots`},
     {k: 'pct', label: 'vs usual', fmt: pctPill},
     {k: 'trend', label: 'Trend', fmt: spark, tip: 'Lowest price per day, then now'},
     {k: 'listed', label: 'Listed', num: 1, fmt: v => h('span', {class: 'muted'}, v)},
@@ -74,16 +89,16 @@ export async function render(main, params) {
 
   const tbl = d.ts == null ? h('p', {class: 'muted'}, 'No prices yet. Run an AHFlip scan in game, or "Refresh API now".') :
     rows.length ? table(cols, rows, sortKey, view === 'below' ? 1 : -1, {onRow: select, selected: r => r.item === selected}) :
-    h('p', {class: 'muted', style: 'margin-top:16px'}, q ? 'No items match.' : 'Nothing here right now.');
+    h('p', {class: 'muted', style: 'margin-top:16px'}, q || cat ? 'No items match.' : 'Nothing here right now.');
 
   main.replaceChildren(h('section', {class: 'page fill'},
     h('h1', {}, 'Market'),
     h('p', {class: 'sub'}, d.ts == null ? '' :
-      `Prices from ${SRC[d.src] || d.src} at ${when(d.ts)}. Usual price = median of earlier scans from the same source.`),
+      `Prices from ${SRC[d.src] || d.src} at ${when(d.ts)}. Usual price = median of earlier scans and API snapshots.`),
     h('div', {class: 'tabs', role: 'tablist'},
       Object.entries(VIEWS).map(([k, name]) => h('button', {class: 'tab' + (k === view ? ' on' : ''), role: 'tab', 'aria-selected': String(k === view), onclick: () => go(k)},
         name, k !== 'all' ? h('span', {class: 'muted'}, ' · ' + (d.counts[k] ?? 0)) : null)),
-      h('div', {class: 'end'}, search)),
+      h('div', {class: 'end'}, catSel, search)),
     h('div', {class: 'grow'}, tbl),
     d.more ? h('p', {class: 'muted small'}, `${d.more} more not shown. Search to narrow down.`) : null,
     d.hidden ? h('p', {class: 'muted small'}, `${d.hidden} rarely listed or erratic items hidden (Settings › Usual price).`) : null));
@@ -103,7 +118,7 @@ export async function showItem(panel, r, watch, close) {
     title: `${when(ts)} (${SRC[src] || src}): ${goldText(min)}, ${qty} listed`}));
   panel.replaceChildren(
     h('div', {}, h('button', {class: 'x', 'aria-label': 'Close', onclick: close}, '×'),
-      h('div', {class: 'muted small'}, '#' + d.item), h('h2', {}, label(d))),
+      h('div', {class: 'muted small'}, '#' + d.item), h('h2', {}, label(d), copyName(d.name))),
     h('dl', {class: 'props'},
       h('dt', {}, 'Now'), h('dd', {}, gold(d.min), d.qty != null ? muted(` · ${d.qty} listed`) : null),
       h('dt', {}, 'Usual'), h('dd', {}, gold(d.median), muted(` · ${d.past} scans`)),

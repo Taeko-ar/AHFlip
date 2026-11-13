@@ -1,4 +1,5 @@
-"""Item info (table item(id, name, sell); name/sell NULL when the API returned 404) and the watchlist."""
+"""Item info (table item(id, name, sell, cls, sub); name/sell NULL when the API returned 404, cls/sub NULL
+until an AHFlip scan saw the item) and the watchlist."""
 
 
 def info(c):
@@ -7,6 +8,17 @@ def info(c):
     for i, n, v in c.execute("select id, name, sell from item"):
         names[i], sell[i] = n, v
     return names, sell
+
+
+def cats(c):
+    """{id: (class, subclass)} for items with a category."""
+    return {i: (k, s) for i, k, s in c.execute("select id, cls, sub from item where cls is not null")}
+
+
+def save_cats(c, rows):
+    """rows [(id, class, subclass)] from the game, for items already in the table (the scan's names add them)."""
+    with c:
+        c.executemany("update item set cls=?, sub=? where id=?", [(k, s, i) for i, k, s in rows])
 
 
 def known_ids(c):
@@ -20,7 +32,10 @@ def missing_ids(c):
 def save_info(c, rows):
     """rows: [(id, name, sell)]"""
     with c:
-        c.executemany("insert or replace into item values(?,?,?)", rows)
+        c.executemany(
+            "insert into item(id, name, sell) values(?,?,?) on conflict(id) do update set name=excluded.name, sell=excluded.sell",
+            rows,
+        )
 
 
 def resolve(c, v):
@@ -35,12 +50,13 @@ def resolve(c, v):
 
 
 def fill_missing(c, rows):
-    """rows [(id, name, sell|None)] from the game: added for unknown items, and fill items the API had no
-    info for (404). Info the API did return is kept."""
+    """rows [(id, name, sell|None)] from the game: added for unknown items; names fill items the API had no
+    info for (404). The game's vendor price replaces the API's: the API is wrong for some Forever items
+    (Iron Grenade: API 5s, game 1s 25c)."""
     with c:
         c.executemany(
-            """insert into item values(?,?,?) on conflict(id) do update
-                         set name = excluded.name, sell = coalesce(excluded.sell, item.sell) where item.name is null""",
+            """insert into item(id, name, sell) values(?,?,?) on conflict(id) do update
+                         set name = coalesce(item.name, excluded.name), sell = coalesce(excluded.sell, item.sell)""",
             [r for r in rows if r[1]],
         )
 

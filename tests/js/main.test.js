@@ -15,7 +15,7 @@ const BODY = readFileSync(resolve(import.meta.dirname, '../../ahflip/web/static/
   .match(/<body>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '');
 const NOW = Math.floor(Date.now() / 1000);
 const STATUS = {job: null, error: null, latest: NOW - 600, src: 'api', attempt: NOW - 600, next: NOW + 600,
-  scan_ts: null, ledger_n: 5, house: 1, houses: {horde: 1, alliance: 2, goblin: 3}, api: true, setup_done: true};
+  scan_ts: null, ledger_n: 5, house: 1, houses: {horde: 1, goblin: 3}, api: true, setup_done: true};
 
 let status, fetch;
 const $ = s => document.querySelector(s);
@@ -225,8 +225,8 @@ describe('auction house selector', () => {
   it('marks the current house and ignores clicks on it', async () => {
     await boot();
     expect(houseButtons().map(b => [b.textContent, b.className, b.getAttribute('aria-pressed')]))
-      .toEqual([['Horde', 'on', 'true'], ['Alliance', '', 'false'], ['Goblin', '', 'false']]);
-    expect(houseButtons()[1].title).toBe('Alliance auction house (#2)');
+      .toEqual([['Global', 'on', 'true'], ['Goblin', '', 'false']]);
+    expect(houseButtons()[1].title).toBe('Goblin auction house (#3)');
     houseButtons()[0].click(); await flush();
     expect(posted(fetch, '/api/settings')).toBeUndefined();
   });
@@ -235,8 +235,8 @@ describe('auction house selector', () => {
     await boot('/market');
     let done;
     pages.market.mockImplementation(() => new Promise(r => { done = r; }));
-    houseButtons()[2].click();
-    expect(houseButtons()[2].className).toBe('on');
+    houseButtons()[1].click();
+    expect(houseButtons()[1].className).toBe('on');
     expect(houseButtons()[0].className).toBe('');
     expect($('#main').classList.contains('busy')).toBe(true);
     expect($('#main').dataset.loading).toBe('Loading the Goblin auction house…');
@@ -247,7 +247,7 @@ describe('auction house selector', () => {
     status = {...STATUS, house: 3, latest: NOW + 5}; // lastTs was reset: no second re-render
     done(); await flush();
     expect(pages.market).toHaveBeenCalledTimes(2);
-    expect(houseButtons()[2].className).toBe('on');
+    expect(houseButtons()[1].className).toBe('on');
   });
 
   it('shows the error and redraws the houses when the switch fails', async () => {

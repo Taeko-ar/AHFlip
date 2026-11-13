@@ -44,6 +44,8 @@ class Sources(unittest.TestCase):
     def test_addon_v1_format_and_default_side(self):
         f = self.file('["time"] = 5,\n["items"] = "7:100:3:120;;8:50:1,50",\n')
         self.assertEqual(addon.read(f), (5, {7: (100, 3), 8: (1, 50)}, {8: [(1, 50)]}, "horde"))
+        f = self.file('["time"] = 5,\n["items"] = "",\n["ah"] = "alliance",\n')  # older addon: shared AH = horde
+        self.assertEqual(addon.read(f)[3], "horde")
 
     def test_addon_no_scan(self):
         with self.assertRaises(ValueError):

@@ -4,7 +4,7 @@ import {fakeApi, flush, pageShell, posted, toastText} from './helpers.js';
 
 const SETTINGS = {flip_discount: 0.65, min_profit: 150, cut: 0.05, cut_goblin: 0.15, hist_days: 14, min_snaps: 3,
   min_listed: 3, max_spread: 10, snap_minutes: 60, rs: 2,
-  house: 1, house_horde: 1, house_alliance: 2, house_goblin: 3,
+  house: 1, house_horde: 1, house_goblin: 3,
   addon_file: '/wow/AHFlip.lua', scan_file: '/wow/Auctionator.lua', scan_realm: 'Realm_Horde'};
 const STATUS = {scan_ts: 1_700_000_000, retried: null, missing: 12,
   scan_files: {'AHFlip.lua': '/wow/AHFlip.lua', 'Auctionator.lua': null}};

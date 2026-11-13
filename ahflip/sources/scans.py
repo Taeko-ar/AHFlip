@@ -30,6 +30,7 @@ def import_one(s, src, path):
         with db.session() as c:
             n = ledger.import_addon(c, addon.read_ledger(path))
             items.fill_missing(c, addon.read_names(path))
+            items.save_cats(c, addon.read_cats(path))
         if n:
             print(f"AHFlip: {n} trades added to the ledger", flush=True)
     ts, best, *extra = SOURCES[src][1](path, s)

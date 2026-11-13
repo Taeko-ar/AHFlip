@@ -142,7 +142,7 @@ describe('ledger page', () => {
     main.querySelector('tbody tr[data-item="1"] td').click();
     await flush();
     expect(main.querySelector('tr.sel').dataset.item).toBe('1');
-    expect(main.querySelector('aside h2').textContent).toBe('Linen Cloth');
+    expect(main.querySelector('aside h2').firstChild.textContent).toBe('Linen Cloth');
     main.querySelector('tbody tr[data-item="3"] td').click();
     await flush();
     expect(main.querySelectorAll('aside')).toHaveLength(1);

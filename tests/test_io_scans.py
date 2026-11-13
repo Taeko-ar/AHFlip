@@ -7,11 +7,11 @@ from pathlib import Path
 from unittest import mock
 
 from ahflip import config, db, items, ledger, prices
-from ahflip.sources import scans
+from ahflip.sources import addon, scans
 
 ADDON = (
     'AHFlipDB = {{\n["time"] = {t},\n["items"] = "{items}",\n["ah"] = "goblin",\n'
-    '["names"] = "2865:12:Elixir of Lesser Agility",\n'
+    '["names"] = "2865:12:Elixir of Lesser Agility",\n["cats"] = "2865:Consumable:Potion",\n'
     '["ledger"] = {{\n"1794290000.1:buy:2865:2:600:12:Elixir of Lesser Agility",\n}},\n}}\n'
 )
 
@@ -47,8 +47,16 @@ class Scans(unittest.TestCase):
             self.assertEqual(prices.depth(c, 116, 1794290042), {2865: [(600, 3), (610, 722)]})
             self.assertEqual(ledger.count(c), 1)
             self.assertEqual(items.info(c)[0], {2865: "Elixir of Lesser Agility"})
+            self.assertEqual(items.cats(c), {2865: ("Consumable", "Potion")})
             self.assertEqual(db.meta(c, "addon_mtime"), os.path.getmtime(path))
         self.assertIn("already imported", scans.import_one(self.s, "addon", path))  # no new trades either
+
+    def test_read_cats(self):
+        f = self.dir / "x.lua"
+        f.write_text('["cats"] = "1:Trade Goods:Cloth;2:Recipe:;bad;3::Leather"')
+        self.assertEqual(addon.read_cats(f), [(1, "Trade Goods", "Cloth"), (2, "Recipe", None)])
+        f.write_text("AHFlipDB = {}")  # scans from before categories
+        self.assertEqual(addon.read_cats(f), [])
 
     def test_v1_addon_without_depth_and_empty_scan(self):
         msg = scans.import_one(self.s, "addon", self.addon_file(items_="2865:600:725:610"))

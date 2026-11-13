@@ -10,13 +10,13 @@ globals = { "AHFlipDB", "SLASH_AHFLIP1", "SlashCmdList" }
 read_globals = {
   -- frames and UI
   "CreateFrame", "UIParent", "Minimap", "GameTooltip", "GameTooltip_Hide", "DEFAULT_CHAT_FRAME",
-  "UISpecialFrames", "AuctionHouseFrame", "HideUIPanel", "Settings", "SettingsPanel",
+  "UISpecialFrames", "AuctionHouseFrame", "ItemRefTooltip", "TooltipDataProcessor", "Enum", "HideUIPanel", "Settings", "SettingsPanel",
   "InterfaceOptionsFrame", "InterfaceOptions_AddCategory", "GetCursorPosition", "ReloadUI",
   -- namespaces
   "C_AuctionHouse", "C_Timer", "C_Item",
   -- units, money, items
-  "UnitName", "UnitFactionGroup", "UnitExists", "GetRealmName", "GetMoney", "GetCoinTextureString",
-  "GetItemInfo", "GetNumBuybackItems", "GetBuybackItemLink", "GetBuybackItemInfo",
+  "UnitName", "UnitFactionGroup", "UnitExists", "GetRealmName", "GetMoney", "GetCoinTextureString", "GetMoneyString",
+  "GetItemInfo", "GetItemInfoInstant", "GetNumBuybackItems", "GetBuybackItemLink", "GetBuybackItemInfo",
   -- mail
   "GetInboxNumItems", "GetInboxHeaderInfo", "GetInboxInvoiceInfo", "AUCTION_SOLD_MAIL_SUBJECT",
   -- WoW's Lua helpers

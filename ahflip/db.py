@@ -30,6 +30,10 @@ def init(c):
         with c:  # 'manual' (website form) or 'addon' (logged in game); addon imports were noted 'AHFlip' before
             c.execute("alter table ledger add column src text default 'manual'")
             c.execute("update ledger set src='addon', note='' where note='AHFlip'")
+    if "cls" not in [r[1] for r in c.execute("pragma table_info(item)")]:
+        with c:  # item category (class / subclass names, e.g. Trade Goods / Leather) from AHFlip scans
+            c.execute("alter table item add column cls text")
+            c.execute("alter table item add column sub text")
     return c
 
 

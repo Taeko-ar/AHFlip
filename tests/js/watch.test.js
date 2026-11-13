@@ -40,7 +40,7 @@ describe('watch page', () => {
     await render(main, new URLSearchParams('item=1'));
     await flush();
     expect(main.querySelector('tr.sel').dataset.item).toBe('1');
-    expect(main.querySelector('aside h2').textContent).toBe('Linen Cloth');
+    expect(main.querySelector('aside h2').firstChild.textContent).toBe('Linen Cloth');
     main.querySelector('tbody tr[data-item="3"] td').click();
     await flush();
     expect(location.search).toBe('?item=3');

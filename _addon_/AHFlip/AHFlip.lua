@@ -61,11 +61,12 @@ end
 local GetItemInfo = C_Item and C_Item.GetItemInfo or GetItemInfo -- Forever has no global GetItemInfo
 local scanSide = "horde" -- which auction house the running scan is from
 
--- Side of the auction house being used: the auctioneer's faction; goblin (Blackwater) auctioneers are neutral.
+-- Auction house being used: "horde" = the global one Horde and Alliance share; goblin (Blackwater)
+-- auctioneers are neutral.
 local function auctionSide()
-  if not UnitExists("npc") then return (UnitFactionGroup("player") or "Horde"):lower() end
+  if not UnitExists("npc") then return "horde" end
   local f = UnitFactionGroup("npc")
-  if f == "Horde" or f == "Alliance" then return f:lower() end
+  if f == "Horde" or f == "Alliance" then return "horde" end
   return "goblin"
 end
 
@@ -78,6 +79,18 @@ end
 local function namesString(names)
   local out = {}
   for id, name in pairs(names) do out[#out + 1] = nameEntry(id, name) end
+  return table.concat(out, ";")
+end
+
+-- "id:class:subclass;..." item categories (e.g. Trade Goods / Leather) for the website's category filter.
+-- GetItemInfoInstant answers from the client's item tables, so it works for items the game never loaded.
+local GetItemInfoInstant = C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant
+local function catsString(items)
+  local out = {}
+  for id in pairs(items) do
+    local _, cls, sub = GetItemInfoInstant(id)
+    if cls then out[#out + 1] = id .. ":" .. cls:gsub("[;:\"\\]", "") .. ":" .. (sub or ""):gsub("[;:\"\\]", "") end
+  end
   return table.concat(out, ";")
 end
 
@@ -134,6 +147,10 @@ end
 
 local function finish(items, total, locked, own, names)
   local parts = {}
+  -- lowest unit price per item, kept per side for the tooltip (other sides' scans stay)
+  local low = { t = time(), p = {} }
+  AHFlipDB.lows = AHFlipDB.lows or {}
+  AHFlipDB.lows[scanSide] = low
   for id, levels in pairs(items) do
     local prices, qty = {}, 0 -- qty: buyable units of this item
     for p, q in pairs(levels) do
@@ -141,6 +158,7 @@ local function finish(items, total, locked, own, names)
       qty = qty + q
     end
     table.sort(prices)
+    low.p[id] = prices[1]
     local out = {}
     for k = 1, math.min(LEVELS, #prices) do
       out[#out + 1] = prices[k] .. "," .. levels[prices[k]]
@@ -154,6 +172,7 @@ local function finish(items, total, locked, own, names)
   AHFlipDB.items = table.concat(parts, ";")
   AHFlipDB.ah = scanSide
   AHFlipDB.names = namesString(names)
+  AHFlipDB.cats = catsString(items)
   local loading = requestNames(items, names)
   -- ReloadUI is protected: only allowed from a click/keypress, so the button turns into "Reload to save".
   msg(("scanned %d items on the %s auction house from %d listings (skipped %d bid-locked, %d yours). Click \"Reload to save\" or type /reload."):format(#parts, scanSide, total, locked, own))
@@ -293,4 +312,33 @@ SlashCmdList.AHFLIP = function(arg)
   if arg == "settings" or arg == "config" or arg == "options" then return ns.toggleSettings() end
   if arg == "help" then return msg("/ahflip: full scan (auction house open) · /ahflip settings: options window") end
   start()
+end
+
+-- Tooltip: the goblin AH's lowest buyout from the last goblin scan (AHFlipDB.lows.goblin).
+local function ago(t)
+  local s = time() - t
+  if s < 3600 then return math.floor(s / 60) .. "m" end
+  if s < 86400 then return math.floor(s / 3600) .. "h" end
+  return math.floor(s / 86400) .. "d"
+end
+
+local function addGoblin(tt, id)
+  local low = AHFlipDB.lows and AHFlipDB.lows.goblin
+  local p = id and low and low.p[id]
+  if not p or not ns.get("tooltip") then return end
+  tt:AddDoubleLine("Goblin AH (" .. ago(low.t) .. " ago)", GetMoneyString(p, true), 1, 0.82, 0, 1, 1, 1)
+  tt:Show() -- resize to fit the new line
+end
+
+if TooltipDataProcessor and Enum and Enum.TooltipDataType then -- newer clients
+  TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tt, data)
+    if tt == GameTooltip or tt == ItemRefTooltip then addGoblin(tt, data and data.id) end
+  end)
+else -- classic clients: item tooltips fire OnTooltipSetItem
+  for _, tt in ipairs({ GameTooltip, ItemRefTooltip }) do
+    tt:HookScript("OnTooltipSetItem", function(self)
+      local _, link = self:GetItem()
+      addGoblin(self, link and tonumber(link:match("item:(%d+)")))
+    end)
+  end
 end

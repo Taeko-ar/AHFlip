@@ -30,9 +30,20 @@ def read_names(path):
     return out
 
 
+def read_cats(path):
+    """AHFlipDB.cats "id:class:subclass;..." -> [(id, class, subclass|None)]."""
+    m = re.search(r'\["cats"\] = "([^"]*)"', Path(path).read_text(errors="replace"))
+    out = []
+    for part in (m.group(1) if m else "").split(";"):
+        f = part.split(":")
+        if len(f) == 3 and f[0].isdigit() and f[1]:
+            out.append((int(f[0]), f[1], f[2] or None))
+    return out
+
+
 def read(path):
     """-> (scan time, {item: (lowest unit price, buyable qty)}, {item: [(price, qty), ...] cheapest first},
-    side 'horde'|'alliance'|'goblin' of the auction house scanned)."""
+    side 'horde' (global, Horde and Alliance share it)|'goblin' of the auction house scanned)."""
     raw = Path(path).read_text(errors="replace")
     side = re.search(r'\["ah"\] = "(horde|alliance|goblin)"', raw)
     t = re.search(r'\["time"\] = (\d+)', raw)
@@ -51,4 +62,5 @@ def read(path):
         n = [int(x) for x in levels.split(",")]
         depth[int(item)] = list(zip(n[0::2], n[1::2], strict=True))
         best[int(item)] = (n[0], int(qty))
-    return int(t.group(1)), best, depth, side.group(1) if side else "horde"  # scans before v2 were all Horde
+    side = side.group(1) if side else "horde"  # scans before v2 were all Horde
+    return int(t.group(1)), best, depth, "goblin" if side == "goblin" else "horde"  # older addons wrote "alliance"

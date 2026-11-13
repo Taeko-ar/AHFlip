@@ -7,6 +7,7 @@ const row = (item, name, now, extra = {}) => ({item, name, now, usual: 1000, lis
   lo: 900, hi: 1200, trend: [1000, 950, now], deal: null, ...extra});
 const MARKET = {
   ts: TS, src: 'addon', counts: {below: 3, vendor: 1}, watch: [1], cut: 0.05, more: 0,
+  cats: [['Recipe', ''], ['Trade Goods', 'Cloth'], ['Trade Goods', 'Leather']],
   rows: [
     row(1, 'Linen Cloth', 500, {deal: {kind: 'flip', units: null, profit: 400}}),
     row(2, null, 800, {pct: -25, sell: null, trend: [800]}),
@@ -34,7 +35,7 @@ describe('market page', () => {
 
   it('shows the below view by default with counts, pills and sparklines', async () => {
     await render(main, params('view=nope'));
-    expect(fetch.mock.calls[0][0]).toBe('/api/market?view=below&q=');
+    expect(fetch.mock.calls[0][0]).toBe('/api/market?view=below&q=&cat=');
     expect(main.querySelector('.sub').textContent).toContain('AHFlip scan');
     expect(tabs(main).map(t => t.textContent)).toEqual(['Below usual price · 3', 'Below vendor · 1', 'Rising · 0', 'All items']);
     expect(tabs(main)[0].className).toBe('tab on');
@@ -58,7 +59,7 @@ describe('market page', () => {
   });
 
   it('says when there are no prices or no rows', async () => {
-    fakeApi({'/api/market': {ts: null, src: null, counts: {}, rows: [], watch: []}});
+    fakeApi({'/api/market': {ts: null, src: null, counts: {}, rows: [], watch: [], cats: []}});
     await render(main, params(''));
     expect(main.textContent).toContain('No prices yet');
     expect(main.querySelector('.sub').textContent).toBe('');
@@ -80,6 +81,26 @@ describe('market page', () => {
     expect(location.search).toBe('?view=vendor&q=wool');
     expect(onRoute).toHaveBeenCalledTimes(2);
     removeEventListener('ahflip:route', onRoute);
+  });
+
+  it('filters by category, keeping it across views', async () => {
+    const onRoute = vi.fn();
+    addEventListener('ahflip:route', onRoute);
+    await render(main, params('cat=Trade Goods/Cloth'));
+    expect(fetch.mock.calls[0][0]).toBe('/api/market?view=below&q=&cat=Trade%20Goods%2FCloth');
+    const sel = main.querySelector('select');
+    expect([...sel.options].map(o => o.textContent)).toEqual(['All categories', 'Recipe', 'Trade Goods', '\u00a0\u00a0Cloth', '\u00a0\u00a0Leather']);
+    expect(sel.value).toBe('Trade Goods/Cloth');
+    sel.value = 'Trade Goods';
+    sel.dispatchEvent(new Event('change'));
+    expect(location.search).toBe('?view=below&cat=Trade+Goods');
+    tabs(main)[1].click();
+    expect(location.search).toBe('?view=vendor&cat=Trade+Goods');
+    expect(onRoute).toHaveBeenCalledTimes(2);
+    removeEventListener('ahflip:route', onRoute);
+    fakeApi({'/api/market': {...MARKET, rows: []}});
+    await render(main, params('cat=Recipe'));
+    expect(main.textContent).toContain('No items match.');
   });
 
   it('debounces the search box', async () => {
@@ -107,7 +128,8 @@ describe('market page', () => {
     expect(location.search).toBe('?view=below&item=1');
     expect(main.querySelector('tr.sel').dataset.item).toBe('1');
     const panel = main.querySelector('aside.panel');
-    expect(panel.querySelector('h2').textContent).toBe('Linen Cloth');
+    expect(panel.querySelector('h2').firstChild.textContent).toBe('Linen Cloth');
+    expect(panel.querySelector('h2 button').title).toBe('Copy name');
     expect(panel.textContent).toContain('If you flip');
     expect(panel.textContent).toContain('per unit');
     expect(panel.querySelectorAll('circle')).toHaveLength(3);
@@ -130,7 +152,7 @@ describe('market page', () => {
     await render(main, params('item=99'));
     await flush();
     expect(fetch.mock.calls.at(-1)[0]).toBe('/api/history?item=99');
-    expect(main.querySelector('aside h2').textContent).toBe('Linen Cloth');
+    expect(main.querySelector('aside h2').firstChild.textContent).toBe('Linen Cloth');
     main.querySelector('aside button.x').click();
     expect(main.querySelector('aside')).toBeNull();
   });

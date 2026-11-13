@@ -45,7 +45,7 @@ setTheme(theme);
 $('#themeBtn').onclick = () => setTheme(theme = theme === 'light' ? 'dark' : 'light');
 
 // Auction house selector (bottom of the sidebar): switches the site and API snapshots to that house.
-const SIDES = {horde: 'Horde', alliance: 'Alliance', goblin: 'Goblin'};
+const SIDES = {horde: 'Global', goblin: 'Goblin'}; // Horde and Alliance share the global auction house
 function drawHouses(s) {
   $('#ahSel').replaceChildren(...Object.entries(SIDES).map(([side, name]) => {
     const on = s.houses[side] === s.house;

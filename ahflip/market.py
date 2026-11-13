@@ -45,19 +45,26 @@ SORT = {  # best first
 }
 
 
-def load_market(c, s, view="below", q="", limit=300):
-    """dict(ts, src, counts {view: n}, rows [...], more, hidden) for the current snapshot.
-    hidden: items this view skips as unreliable (only Below usual / Rising skip any)."""
+def in_cat(cat, r):
+    """cat "" (any), "Class" or "Class/Subclass"."""
+    return not cat or cat in (r["cls"], f"{r['cls']}/{r['sub']}")
+
+
+def load_market(c, s, view="below", q="", cat="", limit=300):
+    """dict(ts, src, counts {view: n}, rows [...], more, hidden, cats) for the current snapshot.
+    hidden: items this view skips as unreliable (only Below usual / Rising skip any).
+    cat narrows rows and counts to one category; cats: [[class, subclass], ...] of every current item."""
     if view not in VIEWS:
         raise ValueError(f"view must be one of {', '.join(VIEWS)}")
     house = s["house"]
     ts = prices.latest(c, house)
     if ts is None:
-        return dict(ts=None, src=None, counts={v: 0 for v in VIEWS}, rows=[], more=0, hidden=0)
+        return dict(ts=None, src=None, counts={v: 0 for v in VIEWS}, rows=[], more=0, hidden=0, cats=[])
     src = prices.source(c, house, ts)
     cur = prices.current(c, house, ts)
     names, sell = items.info(c)
-    series = prices.series(c, house, ts, s["hist_days"], src)
+    cats = items.cats(c)
+    series = prices.series(c, house, ts, s["hist_days"])
     deals = {d["item"]: d for d in load_deals(c, s, {i: [m for _, m, _ in p] for i, p in series.items()})[1]}
     rows = []
     for i, (m, qty) in cur.items():
@@ -68,6 +75,8 @@ def load_market(c, s, view="below", q="", limit=300):
             dict(
                 item=i,
                 name=names.get(i),
+                cls=cats.get(i, (None, None))[0],
+                sub=cats.get(i, (None, None))[1],
                 now=m,
                 usual=usual,
                 listed=qty,
@@ -80,10 +89,12 @@ def load_market(c, s, view="below", q="", limit=300):
                 reliable=reliable(mins + [m], [q for *_, q in pts] + [qty], s["min_listed"], s["max_spread"]),
             )
         )
+    found = sorted({(r["cls"], r["sub"] or "") for r in rows if r["cls"]})
+    rows = [r for r in rows if in_cat(cat, r)]
     disc = s["flip_discount"]
     counts = {v: sum(matches(v, r, disc) for r in rows) for v in VIEWS}
     hidden = sum(matches(view, dict(r, reliable=True), disc) for r in rows) - counts[view]
     q = q.strip().lower()
     out = [r for r in rows if matches(view, r, disc) and (not q or q in (r["name"] or "").lower() or q == str(r["item"]))]
     out.sort(key=SORT[view])
-    return dict(ts=ts, src=src, counts=counts, rows=out[:limit], more=max(0, len(out) - limit), hidden=hidden)
+    return dict(ts=ts, src=src, counts=counts, rows=out[:limit], more=max(0, len(out) - limit), hidden=hidden, cats=found)

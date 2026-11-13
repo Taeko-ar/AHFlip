@@ -7,10 +7,10 @@ const SECTIONS = [
   ['Deals', 'What counts as a deal on the Market page.', [
     ['flip_discount', 'Flip threshold', '"Below usual" means at most this share of usual.', 'pct', '% of usual'],
     ['min_profit', 'Minimum profit', 'Hide deals below this per unit, e.g. 50c.', 'gold'],
-    ['cut', 'AH cut, Horde / Alliance', 'Taken from every sale.', 'pct', '%'],
+    ['cut', 'AH cut, Global', 'Taken from every sale.', 'pct', '%'],
     ['cut_goblin', 'AH cut, Goblin', 'Not verified; sale mails show the real one.', 'pct', '%'],
   ]],
-  ['Usual price', 'Median of earlier scans from the same source.', [
+  ['Usual price', 'Median of earlier scans and API snapshots.', [
     ['hist_days', 'History window', 'How far back scans count.', 'int', 'days'],
     ['min_snaps', 'Scans needed', 'Fewer: no usual price yet.', 'int', 'scans'],
     ['min_listed', 'Minimum listings', 'Rarer items are hidden from Below usual / Rising.', 'int', 'listed'],
@@ -20,9 +20,8 @@ const SECTIONS = [
     ['snap_minutes', 'Snapshot every', '0 turns it off. At least 5.', 'int', 'min'],
     ['rs', 'Ruleset', '1 PvP, 2 Normal, 3 Roleplay, 15 RP PvP.', 'int'],
   ]],
-  ['Auction houses', 'Ids for the Horde / Alliance / Goblin switch.', [
-    ['house_horde', 'Horde', 'Checked in game.', 'int'],
-    ['house_alliance', 'Alliance', 'From the API, not verified.', 'int'],
+  ['Auction houses', 'Ids for the Global / Goblin switch.', [
+    ['house_horde', 'Global (Horde + Alliance)', 'Checked in game.', 'int'],
     ['house_goblin', 'Blackwater (goblin)', 'From the API, not verified.', 'int'],
   ]],
   ['Game files', 'Written by WoW on /reload or logout. * matches any account.', [

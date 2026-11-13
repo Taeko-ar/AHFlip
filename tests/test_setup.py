@@ -31,12 +31,12 @@ class Detect(unittest.TestCase):
         self.assertEqual(setup.detect(None), {})
         self.assertEqual(setup.detect(""), {})
 
-    def test_faction_and_ruleset(self):
-        self.assertEqual(self.detect(saved("Horde", "CAMWOW US2 Realm 6 PvP")), {"faction": "horde", "rs": 1})
-        self.assertEqual(self.detect(saved("Alliance", "Some RP-PvP realm")), {"faction": "alliance", "rs": 15})
+    def test_ruleset(self):
+        self.assertEqual(self.detect(saved("Horde", "CAMWOW US2 Realm 6 PvP")), {"rs": 1})
+        self.assertEqual(self.detect(saved("Alliance", "Some RP-PvP realm")), {"rs": 15})
         self.assertEqual(self.detect(saved(realm="Roleplay Realm")), {"rs": 3})
         self.assertEqual(self.detect(saved(realm="Normal 1")), {"rs": 2})
-        self.assertEqual(self.detect(saved("Goblin")), {})  # neither key recognised
+        self.assertEqual(self.detect(saved("Goblin")), {})  # no realm
 
 
 class State(unittest.TestCase):
@@ -57,7 +57,7 @@ class State(unittest.TestCase):
 
     def test_fresh_install(self):
         s = setup.state(self.c)
-        self.assertEqual((s["done"], s["detected"], s["faction"], s["rs"], s["api"]), (False, {}, "horde", 1, False))
+        self.assertEqual((s["done"], s["detected"], s["rs"], s["api"]), (False, {}, 1, False))
         self.assertEqual(s["files"], {"AHFlip scan": None, "Auctionator scan": None})
 
     def test_detected_from_newest_file(self):
@@ -65,7 +65,7 @@ class State(unittest.TestCase):
         old.write_text(saved("Horde", "PvP"))
         new.write_text(saved("Alliance", "Normal"))
         os.utime(old, (1, 1))
-        self.assertEqual(setup.state(self.c)["detected"], {"faction": "alliance", "rs": 2})
+        self.assertEqual(setup.state(self.c)["detected"], {"rs": 2})
 
     def test_wow_found_or_not(self):
         with mock.patch.object(config, "WOW_FOUND", False):
@@ -78,19 +78,16 @@ class State(unittest.TestCase):
         self.assertTrue(setup.state(self.c)["done"])
 
     def test_save(self):
-        s = setup.save(self.c, "15", "alliance")
-        self.assertEqual((s["done"], s["rs"], s["faction"]), (True, 15, "alliance"))
-        self.assertEqual(db.settings(self.c)["house"], 110)
+        db.save_settings(self.c, {"house": 116})
+        s = setup.save(self.c, "15")
+        self.assertEqual((s["done"], s["rs"]), (True, 15))
+        self.assertEqual(db.settings(self.c)["house"], 113)  # the global auction house
         self.assertTrue(db.meta(self.c, "setup_done"))
-        self.assertEqual(setup.save(self.c, 1, "horde")["faction"], "horde")
-        self.assertEqual(db.settings(self.c)["house"], 113)
 
     def test_save_rejects(self):
-        for rs, faction in ((4, "horde"), (1, "goblin")):
+        for rs in (4, "x"):
             with self.assertRaises(ValueError):
-                setup.save(self.c, rs, faction)
-        with self.assertRaises(ValueError):
-            setup.save(self.c, "x", "horde")
+                setup.save(self.c, rs)
         self.assertIsNone(db.meta(self.c, "setup_done"))
 
 

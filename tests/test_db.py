@@ -31,22 +31,24 @@ class WithDB(unittest.TestCase):
         self.assertEqual(prices.count(c, 113), 3)
         self.assertEqual(prices.source(c, 113, 250), "scan")
 
-    def test_flips_ignore_other_source_history(self):
+    def test_history_mixes_sources(self):
         from ahflip.deals import load_deals
 
         c = self.c
-        for ts in (100, 200, 300):  # stale API data at 20g
+        for ts in (100, 200):  # API at 20g
             prices.store(c, 113, {1: (200000, 2), 2: (ts, 1)}, ts, "api")
-        prices.store(c, 113, {1: (50000, 2)}, 400, "scan")  # fresh scan at 5g
-        self.assertEqual(load_deals(c, db.settings(c))[1], [])
-        self.assertIsNone(prices.item_stats(c, db.settings(c), 1, 400)["median"])
+        prices.store(c, 113, {1: (200000, 2)}, 300, "scan")  # Auctionator at 20g
+        prices.store(c, 113, {1: (50000, 2)}, 400, "addon")  # AHFlip at 5g
+        self.assertEqual(load_deals(c, db.settings(c))[1][0]["worth"], 200000)
+        self.assertEqual(prices.item_stats(c, db.settings(c), 1, 400)["median"], 200000)
 
-    def test_current_snapshot_prefers_best_source(self):
+    def test_current_snapshot_keeps_recent_addon_scan(self):
         c = self.c
-        prices.store(c, 113, {1: (400, 794)}, 300, "scan")  # newest, but Auctionator (can't see bids)
-        prices.store(c, 113, {1: (600, 709)}, 200, "addon")  # AHFlip
-        prices.store(c, 113, {1: (400, 851)}, 100, "api")
-        self.assertEqual(prices.latest(c, 113), 200)
+        prices.store(c, 113, {1: (600, 709)}, 200, "addon")
+        prices.store(c, 113, {1: (400, 851)}, 200 + prices.FRESH - 1, "api")
+        self.assertEqual(prices.latest(c, 113), 200)  # AHFlip scan still fresh: keeps price depth
+        prices.store(c, 113, {1: (300, 851)}, 200 + prices.FRESH, "api")
+        self.assertEqual(prices.latest(c, 113), 200 + prices.FRESH)  # newer data wins
 
     def test_profitable_units_from_depth(self):
         from ahflip.deals import load_deals

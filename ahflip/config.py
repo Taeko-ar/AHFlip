@@ -33,7 +33,7 @@ ADDONS = WOW / "_forever_" / "Interface" / "AddOns"  # where the AHFlip addon fo
 
 # Defaults. The web page can change them; changes are stored in ah.db (meta "settings").
 DEFAULTS = {
-    "cut": 0.05,  # Horde / Alliance AH cut
+    "cut": 0.05,  # global (Horde + Alliance) AH cut
     "cut_goblin": 0.15,  # Blackwater (goblin) AH cut; one guide says 15%, not verified in game
     "min_listed": 3,  # Below usual / Rising: skip items usually listed fewer times than this (thin markets)
     "max_spread": 10,  # Below usual / Rising: skip items whose lowest price swung more than this many times over
@@ -44,10 +44,9 @@ DEFAULTS = {
     "snap_minutes": 10,  # web: auto API snapshot interval, 0 = off
     "rs": 1,  # ruleset: 1 PvP, 2 Normal, 3 Roleplay, 15 Roleplay PvP
     "house": 113,  # the auction house shown on the site (sidebar selector) and fetched from the API
-    # Auction house ids per side on the PvP ruleset. Horde checked in game; Alliance / Blackwater (goblin)
-    # follow the API's grouping (110/113/116), not verified.
+    # Auction house ids per side on the PvP ruleset. Horde and Alliance share one auction house (global, the
+    # Horde id, checked in game); Blackwater (goblin) follows the API's grouping (110/113/116), not verified.
     "house_horde": 113,
-    "house_alliance": 110,
     "house_goblin": 116,
     # In-game scan files (globs; newest match wins). Written by WoW on /reload or logout.
     "addon_file": str(SAVED / "AHFlip.lua"),
@@ -67,7 +66,6 @@ LIMITS = {
     "rs": (1, 10**6),
     "house": (1, 10**6),
     "house_horde": (1, 10**6),
-    "house_alliance": (1, 10**6),
     "house_goblin": (1, 10**6),
 }
-SIDES = ("horde", "alliance", "goblin")  # auction house sides; setting f"house_{side}" holds each id
+SIDES = ("horde", "goblin")  # auction houses: horde = global (shared with Alliance); setting f"house_{side}" holds each id

@@ -9,6 +9,7 @@ ns.DEFAULTS = {
   trackSells = true,   -- log vendor sales to the ledger
   trackAuctionSales = true, -- log your sold auctions (from the sale mails) to the ledger
   chat = false,        -- chat line for each logged trade
+  tooltip = true,      -- goblin AH price (last scan) on item tooltips
   minimap = true,
   minimapAngle = 220,  -- degrees around the minimap
   debug = false,       -- raw scan rows for test items (AHFlipDB.debug) and a "tracking on" line at login
@@ -40,6 +41,7 @@ local OPTIONS = { -- {key, label, tooltip} or {header}
   { "trackAuctionSales", "Track sold auctions", "Read from the \"Auction successful\" mails when you open the mailbox: price after the AH cut." },
   { "chat", "Chat line for every logged trade", "Also hides the \"not logged\" notes. Errors always show." },
   { "Other" },
+  { "tooltip", "Show the goblin AH price on item tooltips", "Lowest buyout from your last scan of the goblin (Blackwater) auction house." },
   { "minimap", "Show the minimap button", "Off: open this window with /ahflip settings." },
   { "debug", "Debug mode", "Saves raw scan rows for a few test items (AHFlipDB.debug), prints \"tracking on\" at login and notes sale mails it can't read." },
 }

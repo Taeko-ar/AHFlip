@@ -26,6 +26,11 @@ class Market(unittest.TestCase):
         self.assertEqual(market.load_market(c, s, "all", "peace")["rows"][0]["item"], 3)
         with self.assertRaises(ValueError):
             market.load_market(c, s, "nope")
+        items.save_cats(c, [(1, "Trade Goods", "Cloth"), (2, "Trade Goods", None)])  # 3: no category yet
+        m = market.load_market(c, s, "below", cat="Trade Goods/Cloth")
+        self.assertEqual(([r["item"] for r in m["rows"]], m["counts"]["below"]), ([1], 1))
+        self.assertEqual(m["cats"], [("Trade Goods", ""), ("Trade Goods", "Cloth")])
+        self.assertEqual({r["item"] for r in market.load_market(c, s, "all", cat="Trade Goods")["rows"]}, {1, 2})
 
     def test_unreliable_items_are_hidden(self):
         c = db.init(sqlite3.connect(":memory:"))
